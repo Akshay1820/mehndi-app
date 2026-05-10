@@ -167,21 +167,62 @@ document.addEventListener('keydown', e => {
 // ── CONTACT FORM ───────────────────────────────────
 const contactForm = document.getElementById('contactForm');
 if (contactForm) {
-  contactForm.addEventListener('submit', e => {
+  let isSubmitting = false;
+  contactForm.addEventListener('submit', async e => {
     e.preventDefault();
+
+    if (isSubmitting) return;
+
+    if (!contactForm.checkValidity()) {
+      contactForm.reportValidity();
+      return;
+    }
+
+    isSubmitting = true;
     const btn = contactForm.querySelector('button[type="submit"]');
     btn.textContent = 'Sending…';
     btn.disabled = true;
-    setTimeout(() => {
-      btn.textContent = '✓ Message Sent!';
-      btn.style.background = '#4caf50';
-      contactForm.reset();
+
+    const fname = document.getElementById('fname').value;
+    const lname = document.getElementById('lname').value;
+    const phone = document.getElementById('phone').value;
+    const email = document.getElementById('email').value || 'Not provided';
+    const service = document.getElementById('service').value || 'Not selected';
+    const date = document.getElementById('date').value || 'Not provided';
+    const message = document.getElementById('message').value || 'No message';
+
+    const text = `🎉 *New Booking Request* 🎉\n\n*Name:* ${fname} ${lname}\n*Phone:* ${phone}\n*Email:* ${email}\n*Service:* ${service}\n*Date:* ${date}\n*Message:* ${message}`;
+
+    const token = '8258839412:AAHvpcFqjIm7n7BY0u-odJOGl5mAgR8xzs4';
+    const chatId = '625400320';
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'Markdown' })
+      });
+
+      if (response.ok) {
+        btn.textContent = '✓ Message Sent!';
+        btn.style.background = '#4caf50';
+        contactForm.reset();
+      } else {
+        throw new Error('Failed');
+      }
+    } catch (error) {
+      console.error(error);
+      btn.textContent = '❌ Error. Try WhatsApp';
+      btn.style.background = '#f44336';
+    } finally {
       setTimeout(() => {
         btn.textContent = 'Send Message';
         btn.style.background = '';
         btn.disabled = false;
-      }, 3000);
-    }, 1500);
+        isSubmitting = false;
+      }, 4000);
+    }
   });
 }
 
